@@ -75,6 +75,7 @@ values
 
 -- asnwers
 
+-- getting median
 select 
     company
   , percentile(cast(salary as bigint), 0.5) as salary
@@ -84,7 +85,8 @@ order by 1
 ;
 
 
-
+-- using rank but NOT the precise median
+-- -- if the number of each group is an even number then it would return the higher / lower of the 2
 select a.id, a.company, a.salary
 from
   (
