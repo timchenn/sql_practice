@@ -105,3 +105,78 @@ inner join
 
 order by 1, 2, 3
 ;
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- department salary
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+-- for each month, what's the department's avg salary compared to company wide avg salary?
+-- -- higher
+-- -- same
+-- -- lower
+
+
+drop table if exists salary;
+create temp table salary
+(
+  id int
+, employee_id int
+, amount int
+, pay_date date
+);
+
+insert into salary
+values
+(1, 1, 9000, '2017-03-31'),
+(2, 2, 6000, '2017-03-31'),
+(3, 3, 10000, '2017-03-31'),
+(4, 1, 7000, '2017-02-28'),
+(5, 2, 6000, '2017-02-28'),
+(6, 3, 8000, '2017-02-28')
+;
+
+select * from salary;
+
+drop table if exists employee;
+create temp table employee
+(
+  employee_id int
+, department_id int
+);
+
+insert into employee
+values
+(1, 1),
+(2, 2),
+(3, 2)
+;
+
+-- asnwers
+select 
+    a.pay_month
+  , a.department_id
+  , case 
+      when avg_salary_dept > avg_salary_comp then 'higher'
+      when avg_salary_dept < avg_salary_comp then 'lower'
+      when avg_salary_dept = avg_salary_comp then 'same'
+	end as comparison
+from 
+  (
+  select date_format(pay_date, 'yyyy-MM') as pay_month, department_id, avg(amount) as avg_salary_dept
+  from salary as a 
+  left join employee as b
+    on a.employee_id = b.employee_id
+  group by 1, 2
+  ) as a
+left join 
+  (
+  select date_format(pay_date, 'yyyy-MM') as pay_month, avg(amount) as avg_salary_comp
+  from salary as a 
+  left join employee as b
+    on a.employee_id = b.employee_id
+  group by 1
+  ) as b
+  on a.pay_month = b.pay_month
+order by 1 desc, 2
+;
