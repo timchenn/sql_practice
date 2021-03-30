@@ -441,3 +441,50 @@ group by 1
 order by 1
 ;
 
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- human traffic of stadium
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+drop table if exists stadium;
+create temp table stadium
+(
+  id int
+, date date
+, people int
+);
+insert into stadium
+values
+  (1, '2017-01-01', 10)
+, (2, '2017-01-02', 109)
+, (3, '2017-01-03', 150)
+, (4, '2017-01-04', 99)
+, (5, '2017-01-05', 145)
+, (6, '2017-01-06', 1455)
+, (7, '2017-01-07', 199)
+, (8, '2017-01-08', 188)
+;
+
+
+-- answers
+
+with long_table as (
+select
+  *
+  ,lag(people, 2) over (order by id asc) as pre2
+  ,lag(people, 1) over (order by id asc) as pre1
+  ,lead(people, 1) over (order by id asc) as nxt1
+  ,lead(people, 2) over (order by id asc) as nxt2
+from stadium
+)
+select
+  id
+  ,date
+  ,people
+from long_table
+where people >= 100
+  and ((pre2 >= 100 and pre1 >= 100) 
+  or (pre1 >= 100 and nxt1 >= 100) 
+  or (nxt1 >= 100 and nxt2 >= 100))
+order by id;

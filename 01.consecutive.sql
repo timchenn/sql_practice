@@ -26,8 +26,8 @@ select * from cinema;
 select distinct(a.seat_id)
 from cinema a
 inner join cinema b
-on abs(a.seat_id - b.seat_id) = 1
-and a.free = 1 and b.free = 1
+  on abs(a.seat_id - b.seat_id) = 1
+ and a.free = 1 and b.free = 1
 -- and a.free = true and b.free = true
 order by a.seat_id
 ;
@@ -38,11 +38,11 @@ from cinema a
 where 1 = 1
 and a.free = 1
 and 
-(
-a.seat_id + 1 in (select seat_id from cinema where free = 1)
-or 
-a.seat_id - 1 in (select seat_id from cinema where free = 1)
-)
+  (
+  a.seat_id + 1 in (select seat_id from cinema where free = 1)
+  or 
+  a.seat_id - 1 in (select seat_id from cinema where free = 1)
+  )
 order by a.seat_id
 ;
 
@@ -85,3 +85,27 @@ and a.num = b.num
 and b.num = c.num
 order by 1
 ;
+
+
+
+
+
+drop table if exists stadium;
+create temp table stadium
+(
+  id int
+, date date
+, people int
+);
+insert into stadium
+values
+  (1, '2017-01-01', 10)
+, (2, '2017-01-02', 109)
+, (3, '2017-01-03', 150)
+, (4, '2017-01-04', 99)
+, (5, '2017-01-05', 145)
+, (6, '2017-01-06', 1455)
+, (7, '2017-01-07', 199)
+, (8, '2017-01-08', 188)
+;
+
