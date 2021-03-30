@@ -471,20 +471,25 @@ values
 
 with long_table as (
 select
-  *
-  ,lag(people, 2) over (order by id asc) as pre2
-  ,lag(people, 1) over (order by id asc) as pre1
-  ,lead(people, 1) over (order by id asc) as nxt1
-  ,lead(people, 2) over (order by id asc) as nxt2
+    *
+  , lag(people, 2) over (order by id asc) as pre2
+  , lag(people, 1) over (order by id asc) as pre1
+  , lead(people, 1) over (order by id asc) as nxt1
+  , lead(people, 2) over (order by id asc) as nxt2
 from stadium
 )
 select
-  id
-  ,date
-  ,people
+    id
+  , date
+  , people
 from long_table
-where people >= 100
-  and ((pre2 >= 100 and pre1 >= 100) 
-  or (pre1 >= 100 and nxt1 >= 100) 
-  or (nxt1 >= 100 and nxt2 >= 100))
-order by id;
+where 1 = 1
+and people >= 100
+and 
+  (
+  (pre2 >= 100 and pre1 >= 100) or
+  (pre1 >= 100 and nxt1 >= 100) or 
+  (nxt1 >= 100 and nxt2 >= 100)
+  )
+order by 1
+;
