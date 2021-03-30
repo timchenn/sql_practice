@@ -1,1 +1,1 @@
-percentile(cast(age as BIGINT), 0.5)
+percentile(cast(age as bigint), 0.5)
