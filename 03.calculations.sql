@@ -447,6 +447,8 @@ order by 1
 -- human traffic of stadium
 -- ----------------------------------------------------------------------------------------------------------------------------------
 
+-- find days where there are more than 100 people in the stadium
+
 drop table if exists stadium;
 create temp table stadium
 (
