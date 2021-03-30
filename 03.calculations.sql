@@ -180,3 +180,264 @@ left join
   on a.pay_month = b.pay_month
 order by 1 desc, 2
 ;
+
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- direct reports
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+-- find the manager with at least 5 direct reports
+
+
+drop table if exists employee;
+create temp table employee
+(
+  id int
+, name varchar(32)
+, department varchar(32)
+, managerid int
+);
+
+insert into employee
+values
+(101, 'John', 'A', null),
+(102, 'Dan', 'A', 101),
+(103, 'James', 'A', 101),
+(104, 'Amy', 'A', 101),
+(105, 'Anne', 'A', 101),
+(106, 'Ron', 'B', 101)
+;
+
+select * from employee;
+
+-- asnwers
+
+select name
+from employee 
+where 1 = 1
+and id in 
+  (
+  select managerid
+  from employee
+  group by 1
+  having 1 = 1
+  and count(managerid) >= 5
+  )
+;
+
+
+-- find duplicate columns
+
+drop table if exists person;
+create temp table person
+(
+  id int
+, email varchar(32)
+);
+
+insert into person
+values
+  (1, 'a@gmail.com')
+, (2, 'a@gmail.com')
+, (3, 'b@gmail.com')
+;
+
+-- answers
+
+select email
+from person
+group by 1
+having count(*) > 1
+;
+
+
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- score
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+-- rank the score
+-- -- a comparison between 
+-- -- -- row_number
+-- -- -- dense_rank
+-- -- -- rank
+
+drop table if exists score;
+create temp table score
+(
+  id int
+, score decimal(4, 2)
+);
+
+insert into score
+values
+(1, 3.5),
+(2, 3.65),
+(3, 4),
+(4, 3.85),
+(5, 4),
+(6, 3.65)
+;
+
+select * from score;
+
+-- asnwers
+select 
+    score
+  , rank() over(order by score desc) as rank
+  , dense_rank() over(order by score desc) as dense_rank
+  , row_number() over(order by score desc) as row_num_rank
+from score
+;
+
+
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- salary
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+-- find the cumulative salary of each employee 
+-- -- excluding the most recent month
+-- -- order by id asc and month desc
+
+drop table if exists employee;
+create temp table employee
+(
+  id int
+, month int
+, salary int
+);
+
+insert into employee
+values
+(1, 1, 20)
+, (2, 1, 20)
+, (1, 2, 30)
+, (2, 2, 30)
+, (3, 2, 40)
+, (1, 3, 40)
+, (3, 3, 60)
+, (1, 4, 60)
+, (3, 4, 70)
+;
+
+select * 
+from employee
+order by 1, 2
+;
+
+-- asnwers
+
+select 
+    a.id
+  , max(b.month) as month
+  , sum(b.salary) as salary
+from employee as a
+inner join employee as b
+  on a.id = b.id
+ and b.month between (a.month - 3) and (a.month - 1)
+group by a.id, a.month
+order by 1, 2 desc
+;
+
+select *
+from employee as a
+inner join employee as b
+  on a.id = b.id
+ and b.month between (a.month - 3) and (a.month - 1)
+;
+
+select 
+    id
+  , month
+  , salary
+from 
+  (
+  select
+      id
+    , month
+    , sum(sum(salary)) over (partition by id order by month rows between 3 preceding and current row) as salary
+    , row_number() over (partition by id order by month desc) as rnk
+  
+  from employee as a
+  group by 1, 2
+  having rnk <> 1
+  order by 1, 2 desc
+  )
+;
+
+
+
+
+-- ----------------------------------------------------------------------------------------------------------------------------------
+-- trips
+-- ----------------------------------------------------------------------------------------------------------------------------------
+
+
+-- calculate the cancellation rate of unbanned users
+
+drop table if exists trips;
+create temp table trips
+(
+  id int
+, client_id int
+, driver_id int
+, city_id int
+, status varchar(32)
+, request_at date
+);
+insert into trips
+values
+  (1, 1, 10, 1, 'completed', '2013-10-01')
+, (2, 2, 11, 1, 'cancelled', '2013-10-01')
+, (3, 3, 12, 6, 'completed', '2013-10-01')
+, (4, 4, 13, 6, 'cancelled', '2013-10-01')
+, (5, 1, 10, 1, 'completed', '2013-10-02')
+, (6, 2, 11, 6, 'completed', '2013-10-02')
+, (7, 3, 12, 6, 'completed', '2013-10-02')
+, (8, 2, 12, 12, 'completed', '2013-10-03')
+, (9, 3, 10, 12, 'completed', '2013-10-03')
+, (10, 4, 13, 12, 'cancelled', '2013-10-03')
+;
+
+drop table if exists users;
+create temp table users
+(
+  users_id int
+, banned varchar(32)
+, role varchar(32)
+);
+insert into users
+values
+  (1, 'No', 'client')
+, (2, 'Yes', 'client') 
+, (3, 'No', 'client') 
+, (4, 'No', 'client') 
+, (11, 'No', 'driver')
+, (12, 'No', 'driver') 
+, (13, 'No', 'driver') 
+, (14, 'No', 'driver') 
+;
+
+select * from trips;
+select * from users;
+
+
+-- answers
+
+select 
+    request_at as day
+  , round(sum(case when status = 'cancelled' then 1 else 0 end) / count(*), 2) as cencellation_rate
+from trips as a
+left join users as b
+  on a.client_id = b.users_id
+ and role = 'client'
+where 1 = 1
+and banned = 'No'
+group by 1
+order by 1
+;
+
