@@ -100,3 +100,154 @@ from (
 	from employee
 ) e1 where rk >= 2
 order by id, month desc;
+
+
+
+
+
+
+
+
+
+
+-- ----- ----- ----- ----- ----- ----- Unanswered
+
+--  601. 体育馆的人流量
+SELECT 
+    id, visit_date, people
+FROM (
+     SELECT 
+        id, visit_date, people, count(*) over(partition by tag) as cnt_tag
+     FROM (
+        SELECT 
+            id, visit_date, people, id - row_number() over(order by id) as tag
+        FROM 
+            stadium
+        WHERE 
+            people >= 100
+    ) t
+) y
+WHERE 
+    cnt_tag >= 3
+ORDER BY id
+;
+
+
+
+
+
+
+
+
+
+-- 615. 平均工资：部门与公司比较
+
+with base_tbl as 
+(
+select distinct
+    date_format(pay_date, '%Y-%m') as pay_month
+  , department_id
+  , avg(amount) over(partition by pay_date, department_id) as dept_avg_salary
+  , avg(amount) over(partition by pay_date) as company_avg_salary
+from salary as a 
+left join employee as b 
+  on a.employee_id = b.employee_id
+)
+select distinct
+    pay_month
+  , department_id
+  , case 
+      when dept_avg_salary > company_avg_salary then 'higher'
+      when dept_avg_salary = company_avg_salary then 'same'
+      when dept_avg_salary < company_avg_salary then 'lower'
+    end as comparison
+from base_tbl
+order by 2, 1
+
+
+with dept as 
+(
+select
+    date_format(pay_date, '%Y-%m') as pay_month
+  , department_id
+  , avg(amount) as dept_avg_salary
+from salary as a 
+left join employee as b 
+  on a.employee_id = b.employee_id
+group by 1, 2
+), 
+company as 
+(
+select
+    date_format(pay_date, '%Y-%m') as pay_month
+  , avg(amount) as company_avg_salary
+from salary as a 
+left join employee as b 
+  on a.employee_id = b.employee_id
+group by 1
+)
+select 
+    a.pay_month
+  , a.department_id
+  , case 
+      when dept_avg_salary > company_avg_salary then 'higher'
+      when dept_avg_salary = company_avg_salary then 'same'
+      when dept_avg_salary < company_avg_salary then 'lower'
+    end as comparison
+from dept as a 
+left join company as b 
+  on a.pay_month = b.pay_month
+;
+
+
+
+
+-- 618. 学生地理信息报告
+
+select
+     max(case when continent='America' then name else null end) as America
+    ,max(case when continent='Asia' then name else null end) as Asia
+    ,max(case when continent='Europe' then name else null end) as Europe
+from(
+    select row_number() over(partition by continent order by name) as rn
+    , a.* from student as a
+) t
+group by rn
+
+
+
+-- 1097. 游戏玩法分析 V
+
+with base_tbl as 
+(
+select 
+    player_id
+  , min(event_date) as install_dt
+  , min(event_date) + interval '1' day as 1d_retention_dt
+from activity
+group by 1
+)
+select 
+    install_dt
+  , count(distinct case when install_dt = event_date then a.player_id else null end) as installs
+  , round(count(distinct case when 1d_retention_dt = event_date then a.player_id else null end) / count(distinct case when install_dt = event_date then a.player_id else null end), 2) as day1_retention
+from base_tbl as a
+left join activity as b 
+  on a.player_id = b.player_id
+group by 1
+;
+
+SELECT 
+    first_date install_dt, 
+    count(distinct a.player_id) installs,
+    round(count(distinct b.player_id) / count(distinct a.player_id), 2) Day1_retention
+FROM (
+    SELECT 
+        player_id, 
+        min(event_date) first_date 
+    FROM activity 
+    GROUP BY player_id
+) a
+LEFT JOIN activity b ON a.player_id = b.player_id and DATEDIFF(b.event_date, a.first_date) = 1
+GROUP BY first_date
+ORDER BY first_date;
