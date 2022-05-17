@@ -251,3 +251,28 @@ FROM (
 LEFT JOIN activity b ON a.player_id = b.player_id and DATEDIFF(b.event_date, a.first_date) = 1
 GROUP BY first_date
 ORDER BY first_date;
+
+
+
+
+
+-- 1127. 用户购买平台
+select 
+	t2.spend_date,
+	t1.platform,
+	sum(if(t1.platform = t2.platform, amount, 0)) as total_amount,
+	count(if(t1.platform = t2.platform, 1, null)) as total_users
+from (
+	select 'mobile' as platform union
+	select 'desktop' as platform union
+	select 'both' as platform 
+) t1, (
+	select 
+		user_id,
+		spend_date, 
+		any_value(if(count(platform) = 2, 'both', platform)) platform,
+		sum(amount) amount
+	from spending
+	group by user_id, spend_date
+) t2 group by t2.spend_date, t1.platform
+
